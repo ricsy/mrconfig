@@ -1,11 +1,11 @@
-# path-config
+# mrconfig
 
 多路径配置文件加载器，支持 JSON、YAML、TOML 格式。
 
 ## 安装
 
 ```bash
-pip install path-config
+pip install mrconfig
 ```
 
 ## 支持格式
@@ -19,7 +19,7 @@ pip install path-config
 ## 使用
 
 ```python
-from path_config import ConfigLoader
+from mrconfig import ConfigLoader
 
 # 简单用法：当前目录 + XDG 目录
 loader = ConfigLoader(name=".myapp.yaml", xdg="app/config.yaml")
