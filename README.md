@@ -1,6 +1,6 @@
 # mrconfig
 
-多路径配置文件加载器，支持 JSON、YAML、TOML 格式。
+多路径配置文件加载器，支持 JSON、YAML、TOML 格式
 
 ## 安装
 
@@ -64,4 +64,4 @@ class ConfigLoader:
 
 ### load_config(name=None, xdg=None, env=None, default=None)
 
-便捷函数。
+便捷函数
