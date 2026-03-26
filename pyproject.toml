@@ -15,7 +15,7 @@ dependencies = [
 
 [tool.hatch.version]
 source = "code"
-path = "mrconfig/__init__.py"
+path = "mrconfig/_version.py"
 
 [project.optional-dependencies]
 dev = [
