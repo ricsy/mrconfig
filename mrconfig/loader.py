@@ -39,17 +39,42 @@ class ConfigLoader:
         self._loaders = loaders or DEFAULT_LOADERS.copy()
 
         if name:
-            self.paths.append(Path.cwd() / name)
+            self.paths.append(Path(name).expanduser().resolve())
         if xdg:
-            self.paths.append(self._xdg_config_path(xdg))
+            self.paths.append(self._xdg_config_path(xdg).expanduser().resolve())
+
+    def get_paths(self) -> list[Path]:
+        """获取所有配置文件路径
+
+        按优先级返回所有可能的配置文件路径（已去重）。
+
+        优先级：
+        1. 环境变量指定的路径（如果设置了 env）
+        2. name 指定的路径（当前目录）
+        3. xdg 指定的路径
+
+        Returns:
+            所有可能的配置文件路径列表
+        """
+        paths: list[Path] = []
+
+        # 优先级 1：环境变量
+        if self.env and (env_path := os.environ.get(self.env)):
+            paths.append(Path(env_path))
+
+        # 优先级 2 & 3：路径列表
+        paths.extend(self.paths)
+
+        # 去重，保持顺序
+        return list(dict.fromkeys(paths))
 
     @staticmethod
     def _xdg_config_path(filename: str) -> Path:
         """获取 XDG 配置目录下的文件路径"""
         if os.name == "nt":
-            base = Path(os.environ.get("APPDATA", "~"))
+            base = Path(os.environ.get("APPDATA", "~")).expanduser()
         else:
-            base = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
+            base = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser()
         return base / filename
 
     def _get_loader(self, path: Path) -> Loader | None:
@@ -71,18 +96,30 @@ class ConfigLoader:
         Returns:
             加载的配置字典，未找到返回 default
         """
+        if (path := self.get_active_path()) is not None:
+            return self._load_file(path)
+        return default
+
+    def get_active_path(self) -> Path | None:
+        """获取实际生效的配置文件路径
+
+        按优先级检查并返回第一个存在的配置文件路径。
+
+        Returns:
+            实际生效的配置文件路径，不存在返回 None
+        """
         # 优先级 1：环境变量
         if self.env and (env_path := os.environ.get(self.env)):
-            p = Path(env_path)
+            p = Path(env_path).expanduser().resolve()
             if p.exists():
-                return self._load_file(p)
+                return p
 
         # 优先级 2：路径列表
         for p in self.paths:
             if p.exists():
-                return self._load_file(p)
+                return p
 
-        return default
+        return None
 
     def _load_file(self, path: Path) -> dict[str, Any]:
         """从文件加载配置"""

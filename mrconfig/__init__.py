@@ -7,7 +7,7 @@ __version__ = "0.1.0"
 
 from .loader import ConfigLoader
 from .loaders import JsonLoader, Loader, TomlLoader, YamlLoader
-from .utils import load_config, xdg_config_path
+from .utils import get_active_config_path, load_config, load_file, xdg_config_path
 
 __all__ = [
     "ConfigLoader",
@@ -15,6 +15,8 @@ __all__ = [
     "Loader",
     "TomlLoader",
     "YamlLoader",
+    "get_active_config_path",
     "load_config",
+    "load_file",
     "xdg_config_path",
 ]
