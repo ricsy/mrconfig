@@ -9,6 +9,16 @@ from typing import Any
 from .loaders import DEFAULT_LOADERS, Loader
 
 
+def _to_kebab_case(name: str) -> str:
+    """将下划线命名转换为短横线命名"""
+    return name.replace("_", "-")
+
+
+def _to_env_name(name: str) -> str:
+    """将名称转换为环境变量命名"""
+    return name.upper().replace("-", "_")
+
+
 class ConfigLoader:
     """多路径配置文件加载器
 
@@ -42,6 +52,47 @@ class ConfigLoader:
             self.paths.append(Path(name).expanduser().resolve())
         if xdg:
             self.paths.append(self._xdg_config_path(xdg).expanduser().resolve())
+
+    @classmethod
+    def from_app(
+        cls,
+        app: str,
+        *,
+        use_env: bool = True,
+        ext: str = ".yaml",
+    ) -> ConfigLoader:
+        """从应用名称快速创建配置加载器
+
+        自动推断以下配置：
+        - name: .{app}.yaml（当前目录）
+        - xdg: {app}/config.yaml（XDG 配置目录）
+        - env: {APP}_CONFIG（环境变量，use_env=True 时）
+
+        Args:
+            app: 应用名称，如 "test_backup"
+            use_env: 是否启用环境变量覆盖
+            ext: 配置文件扩展名，默认 .yaml
+
+        Returns:
+            配置加载器实例
+
+        Example:
+            >>> loader = ConfigLoader.from_app("myapp")
+            >>> # 等价于:
+            >>> # ConfigLoader(
+            >>> #     name=".myapp.yaml",
+            >>> #     xdg="myapp/config.yaml",
+            >>> #     env="MYAPP_CONFIG",
+            >>> # )
+        """
+        kebab_app = _to_kebab_case(app)
+        env_name = f"{_to_env_name(app)}_CONFIG"
+
+        return cls(
+            name=f".{app}{ext}",
+            xdg=f"{kebab_app}/config{ext}",
+            env=env_name if use_env else None,
+        )
 
     def get_paths(self) -> list[Path]:
         """获取所有配置文件路径

@@ -59,52 +59,68 @@ def xdg_config_path(filename: str) -> Path:
 
 
 def load_config(
+    app: str | None = None,
+    *,
     name: str | None = None,
     xdg: str | None = None,
     env: str | None = None,
+    use_env: bool = True,
     default: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """从多个路径加载配置文件
 
     搜索顺序：
-    1. 环境变量指定的路径（如果提供了 env）
+    1. 环境变量指定的路径（如果提供了 env 或 app）
     2. name 指定的路径（当前目录）
     3. xdg 指定的路径
 
     Args:
+        app: 应用名称，如提供则自动推断 name/xdg/env
         name: 配置文件名（当前目录）
         xdg: XDG 配置目录下的路径
         env: 环境变量名
+        use_env: 是否启用环境变量覆盖（仅 app 模式有效）
         default: 未找到配置时的默认值
 
     Returns:
         加载的配置字典，未找到返回 default
     """
-    loader = ConfigLoader(name=name, xdg=xdg, env=env)
+    if app:
+        loader = ConfigLoader.from_app(app, use_env=use_env)
+    else:
+        loader = ConfigLoader(name=name, xdg=xdg, env=env)
     return loader.load(default=default)
 
 
 def get_active_config_path(
+    app: str | None = None,
+    *,
     name: str | None = None,
     xdg: str | None = None,
     env: str | None = None,
+    use_env: bool = True,
 ) -> Path | None:
     """获取实际生效的配置文件路径
 
     按优先级检查并返回第一个存在的配置文件路径。
 
     搜索顺序：
-    1. 环境变量指定的路径（如果提供了 env）
+    1. 环境变量指定的路径（如果提供了 env 或 app）
     2. name 指定的路径（当前目录）
     3. xdg 指定的路径
 
     Args:
+        app: 应用名称，如提供则自动推断 name/xdg/env
         name: 配置文件名（当前目录）
         xdg: XDG 配置目录下的路径
         env: 环境变量名
+        use_env: 是否启用环境变量覆盖（仅 app 模式有效）
 
     Returns:
         实际生效的配置文件路径，不存在返回 None
     """
-    loader = ConfigLoader(name=name, xdg=xdg, env=env)
+    if app:
+        loader = ConfigLoader.from_app(app, use_env=use_env)
+    else:
+        loader = ConfigLoader(name=name, xdg=xdg, env=env)
     return loader.get_active_path()

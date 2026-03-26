@@ -379,6 +379,33 @@ class TestGetActiveConfigPath:
         result = get_active_config_path(name=".nonexistent.yaml")
         assert result is None
 
+    def test_get_active_config_path_app(self, monkeypatch) -> None:
+        """测试 app 参数"""
+        monkeypatch.delenv("TEST_APP_CONFIG", raising=False)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                config_file = Path(".test_app.yaml")
+                config_file.write_text("key: value", encoding="utf-8")
+
+                result = get_active_config_path(app="test_app")
+                assert result is not None
+                assert result.name == ".test_app.yaml"
+            finally:
+                os.chdir(old_cwd)
+
+    def test_get_active_config_path_app_env_priority(self, monkeypatch) -> None:
+        """测试 app 模式下环境变量优先级"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            env_file = Path(tmpdir) / "env.yaml"
+            env_file.write_text("key: env", encoding="utf-8")
+
+            monkeypatch.setenv("MYAPP_CONFIG", str(env_file))
+            result = get_active_config_path(app="myapp")
+            assert result is not None
+            assert result.resolve() == env_file.resolve()
+
 
 class TestPathSecurity:
     """路径安全测试"""
@@ -411,3 +438,70 @@ class TestPathSecurity:
             assert loader.paths[0].name == path.name
         finally:
             path.unlink()
+
+
+class TestFromApp:
+    """from_app 类方法测试"""
+
+    def test_from_app_basic(self) -> None:
+        """测试基本用法"""
+        loader = ConfigLoader.from_app("claw_backup")
+
+        assert loader.env == "CLAW_BACKUP_CONFIG"
+        assert len(loader.paths) == 2
+        assert loader.paths[0].name == ".claw_backup.yaml"
+        assert loader.paths[1].name == "config.yaml"
+
+    def test_from_app_kebab_case(self) -> None:
+        """测试下划线转短横线"""
+        loader = ConfigLoader.from_app("my_app_name")
+
+        assert loader.paths[0].name == ".my_app_name.yaml"
+        assert "my-app-name" in str(loader.paths[1])
+
+    def test_from_app_without_env(self) -> None:
+        """测试禁用环境变量"""
+        loader = ConfigLoader.from_app("my_app", use_env=False)
+
+        assert loader.env is None
+
+    def test_from_app_custom_ext(self) -> None:
+        """测试自定义扩展名"""
+        loader = ConfigLoader.from_app("my_app", ext=".json")
+
+        assert loader.paths[0].name == ".my_app.json"
+        assert loader.paths[1].name == "config.json"
+
+
+class TestLoadConfigApp:
+    """load_config app 模式测试"""
+
+    def test_load_config_app_from_name(self, monkeypatch) -> None:
+        """测试从 name 加载"""
+        monkeypatch.delenv("MY_APP_CONFIG", raising=False)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                config_file = Path(".my_app.yaml")
+                config_file.write_text("key: value", encoding="utf-8")
+
+                result = load_config("my_app")
+                assert result == {"key": "value"}
+            finally:
+                os.chdir(old_cwd)
+
+    def test_load_config_app_env_priority(self, monkeypatch) -> None:
+        """测试环境变量优先级"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            env_file = Path(tmpdir) / "env.yaml"
+            env_file.write_text("source: env", encoding="utf-8")
+
+            monkeypatch.setenv("TEST_APP_CONFIG", str(env_file))
+            result = load_config("test_app", use_env=True)
+            assert result == {"source": "env"}
+
+    def test_load_config_app_default(self) -> None:
+        """测试返回默认值"""
+        result = load_config("nonexistent_app", default={"default": True})
+        assert result == {"default": True}
