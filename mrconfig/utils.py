@@ -64,7 +64,7 @@ def load_config(
     name: str | None = None,
     xdg: str | None = None,
     env: str | None = None,
-    use_env: bool = True,
+    use_env: bool = False,
     default: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """从多个路径加载配置文件
@@ -98,7 +98,7 @@ def get_active_config_path(
     name: str | None = None,
     xdg: str | None = None,
     env: str | None = None,
-    use_env: bool = True,
+    use_env: bool = False,
 ) -> Path | None:
     """获取实际生效的配置文件路径
 
