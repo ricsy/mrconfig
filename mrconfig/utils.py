@@ -42,8 +42,7 @@ def load_file(path: str | Path) -> dict[str, Any]:
 def xdg_config_path(filename: str) -> Path:
     r"""获取 XDG 配置目录下的文件路径
 
-    Linux/macOS: ~/.config/{filename}
-    Windows: %APPDATA%\{filename}
+    Linux/macOS/Windows: ~/.config/{filename}
 
     Args:
         filename: 配置文件名
@@ -51,11 +50,7 @@ def xdg_config_path(filename: str) -> Path:
     Returns:
         配置文件路径
     """
-    if os.name == "nt":
-        base = Path(os.environ.get("APPDATA", "~"))
-    else:
-        base = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config"))
-    return base / filename
+    return Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")) / filename
 
 
 def load_config(

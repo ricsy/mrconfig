@@ -57,15 +57,10 @@ config = loader.load(default={"debug": False})
 
 ### XDG 配置路径
 
-| 平台      | 路径                     |
-|---------|------------------------|
-| Linux   | `~/.config/{filename}` |
-| macOS   | `~/.config/{filename}` |
-| Windows | `%APPDATA%\{filename}` |
+`~/.config/{filename}`
 
 可通过环境变量覆盖：
-- Linux/macOS: `XDG_CONFIG_HOME`
-- Windows: `APPDATA`
+- Linux/macOS/Windows: `XDG_CONFIG_HOME`
 
 ## API 参考
 
